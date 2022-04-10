@@ -44,6 +44,8 @@ loop:
   jsr print_hex
   jsr rtc_get_year
   jsr print_hex
+  lda #$13
+  jsr print_char
 
 
   jmp loop
