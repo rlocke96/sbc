@@ -1,0 +1,156 @@
+; mbr.asm
+; version 0.0.4
+; by robert locke
+; started 11/6/2020
+; last edit 03/20/2022
+
+
+.include "bios.inc"
+.segment "ZEROPAGE"
+
+zp_tmp_holder .res 2
+zp_current_partition .res 2
+
+; known offsets
+;
+; master boot record
+;
+
+;----------------------------------------------------------------------
+; Master Boot Record Variables 
+; 
+;----------------------------------------------------------------------
+.segment "MBRVAR"
+p0_state .res 2, $00
+
+;----------------------------------------------------------------------
+; Master Boot Record Partition Offsets
+;----------------------------------------------------------------------
+mbr_partition         = $1be
+mbr_partition_size    = $10
+mbr_partition_type    = $04
+mbr_partition_start   = $08
+mbr_partition_length  = $0c
+mbr_partition_state   = $00
+
+.segment "MBR"
+begin:
+  lda #$00
+  sta delay_timer
+
+  jsr print_nlcr
+  ldx #<message_begin
+  ldy #>message_begin
+  jsr print_string
+
+  ;load location of beginning of partition entry
+  lda #<begin + <mbr_partition
+  sta zp_tmp_holder
+  lda #>begin + >mbr_partition
+  sta zp_tmp_holder+1
+
+; What does this do? We have not initalized P0_STATE yet?
+  lda #<p0_state
+  sta zp_current_partition
+  lda #>p0_state
+  sta zp_current_partition+1
+
+.part
+  ldy #mbr_partition_type
+  lda (zp_tmp_holder),y
+  cmp #$0c
+  bne .next_part
+
+  ldy #$00
+  ldx #mbr_partition_state
+  lda (zp_tmp_holder,x)
+  sta (zp_current_partition),y
+  iny
+
+  ldx #mbr_partition_start
+.loop_start
+  lda begin + mbr_partition, x
+  sta (zp_current_partition),y
+  inx
+  iny
+  cpy #$05
+  bne .loop_start
+
+  ldx #mbr_partition_length
+.loop_size
+  ;lda $5be,x
+  lda begin + mbr_partition,x
+  sta (zp_current_partition),y
+  inx
+  iny
+  cpy #$09
+  bne .loop_size
+
+.next_part
+  clc
+  lda zp_tmp_holder
+  adc #$10
+  cmp #<begin + <mbr_partition + 64
+  beq load_partition
+  sta zp_tmp_holder
+  lda zp_current_partition
+  adc #$08
+  sta zp_current_partition
+
+  jmp .part
+
+load_partition
+  lda #<p0_state
+  sta zp_tmp_holder
+  lda #>p0_state
+  sta zp_tmp_holder + 1
+
+  ldy #$00
+.loop_part_table
+  lda (zp_tmp_holder),y
+  cmp #$80
+  beq .load
+  lda zp_tmp_holder
+  adc #$09
+  cmp #<p0_state + (9 * 4)
+  sta zp_tmp_holder
+  bne .loop_part_table
+
+@error
+
+  jsr print_nlcr
+  ldx #<message
+  ldy #>message
+  jsr print_string
+
+.done
+  jmp .done
+
+.load
+  ldy #$1
+  ldx #$3
+.load_loop
+  lda (zp_tmp_holder),y
+  sta sd_address,x
+  iny
+  dex
+  bne .load_loop
+
+  ldx #$00
+  ldy #$07
+  jsr sd_set_destination
+
+  jsr sd_readsector
+  ldx #<message_jmp
+  ldy #>message_jmp
+  jsr print_string
+
+  jmp $75a
+
+message
+  .byte "error: no partition found",$00
+message_begin
+  .byte "mbr: reading partition info",$0a,$0d,$00
+message_jmp
+  .byte "about to jump to 0x075a",$0a,$0d,$00
+

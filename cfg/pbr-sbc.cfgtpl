@@ -1,0 +1,19 @@
+MEMORY {
+    ZP:        start =    $9, size =  $100, type   = rw, define = yes;
+    RAM:       start =  $210, size = $7E00, define = yes;
+    RAM2:      start = $075A, size = $200, file = %O;
+    ROM:       start = $C000, size = $4000, file = "";
+}
+
+SEGMENTS {
+    ZEROPAGE: load = ZP,  type = zp,  define   = yes;
+    DATA:     load = ROM, type = rw,  define   = yes, run = RAM;
+    BSS:      load = RAM, type = bss, define   = yes;
+    HEAP:     load = RAM, type = bss, optional = yes;
+    ONCE:     load = ROM, type = ro,  optional = yes;
+    CODE:     load = ROM, type = ro;
+    RODATA:   load = ROM, type = ro;
+    PBR:      load = RAM2, type = rw,  start    = $075A; 
+    PBR_TAIL: load = RAM2, type = rw,  start    = $08FE; 
+}
+

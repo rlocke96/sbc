@@ -1,0 +1,73 @@
+;
+; kernel.bin
+; by robert locke
+; version .04
+; start 11/8/2020
+; v.04 start 3/20/2022
+;
+
+
+.include "bios.inc"
+;.include "spi.inc"
+;.include "sdcard.inc"
+.include "fat32.inc"
+.include "regs.inc"
+
+.import fat32_dirent
+
+.segment "BEGIN"
+main
+  ldx #$FF
+  txs
+  cld
+
+; Initialize SD Card
+  jsr sdcard_init
+  bcc error
+
+  jsr fat32_init
+  bcc error
+
+  lda #0
+  jsr fat32_alloc_context
+  sta context
+  
+  lda #$df
+  sta skip_mask
+
+  lda #<file_name
+  sta fat32_ptr
+  lda #>file_name
+  sta fat32_ptr+1
+  jsr fat32_open
+  bcc error
+
+loop:  
+    ; read and print byte  
+    jsr fat32_read_byte  
+    bcc end  
+    jsr print_char  
+    jmp loop
+
+end:  
+    jsr fat32_close
+
+    lda context  
+    jmp fat32_free_context
+
+  
+  lda #'.'
+  jsr print_char
+
+end_of_program:
+  jmp end_of_program
+
+error:
+  lda fat32_errno
+  jsr print_hex
+  jmp end_of_program
+
+file_name:
+  .byte "/TEST.TXT",0
+context:
+  .byte 0

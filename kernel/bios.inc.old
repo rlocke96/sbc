@@ -1,0 +1,44 @@
+acia_in                  = $F027
+acia_init                = $F000
+acia_out                 = $F017
+delay                    = $F039
+delay_long               = $F042
+delay_medium             = $F04B
+delay_timer              = $0200
+get_char                 = $F411
+memory_begin             = $0201
+memory_end               = $0203
+memory_init              = $F38A
+print_char               = $F3C8
+print_hex                = $F3DB
+print_nlcr               = $F3D0
+print_string             = $F3F2
+;sd_address               = $0206
+;sd_init                  = $F054
+;sd_next_sector           = $F1AB
+;sd_readsector            = $F175
+;sd_set_cmd_address       = $F1C8
+;sd_set_destination       = $F1C3
+
+; Maximum number of open files
+FAT32_CONTEXTS = 4
+
+; Maximum number of partitions
+FAT32_VOLUMES = 4
+
+;----------------------------------------------------------------------
+; errno
+;----------------------------------------------------------------------
+ERRNO_OK		= 0
+ERRNO_READ		= 1
+ERRNO_WRITE            	= 2
+ERRNO_ILLEGAL_FILENAME 	= 3
+ERRNO_FILE_EXISTS      	= 4
+ERRNO_FILE_NOT_FOUND   	= 5
+ERRNO_FILE_READ_ONLY   	= 6
+ERRNO_DIR_NOT_EMPTY    	= 7
+ERRNO_NO_MEDIA         	= 8
+ERRNO_NO_FS            	= 9
+ERRNO_FS_INCONSISTENT  	= 10
+ERRNO_WRITE_PROTECT_ON 	= 11
+ERRNO_OUT_OF_RESOURCES 	= 12
