@@ -16,6 +16,9 @@ main
   txs
   cld
 
+  LDX #<CLEAR_SCREEN_ESC
+  LDY #>CLEAR_SCREEN_ESC
+  JSR print_string
 loop:
 
   jsr rtc_get_hours
@@ -44,8 +47,25 @@ loop:
   jsr print_hex
   jsr rtc_get_year
   jsr print_hex
-  lda #$13
+
+  lda #$1b
+  jsr print_char
+  lda #'['
   jsr print_char
 
+  lda #'?'
+  jsr print_char
+  lda #'2'
+  jsr print_char
+  lda #'5'
+  jsr print_char
+  lda #'l'
+  jsr print_char
+
+  lda #$0d
+  jsr print_char
 
   jmp loop
+
+CLEAR_SCREEN_ESC
+  .byte $1B,"c",$00
