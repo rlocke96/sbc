@@ -1,6 +1,6 @@
 MEMORY {
-    ZP:        start =    $0, size =  $100, type   = rw, define = yes;
-    BSS:       start =  $210, size =  $DF0, type   = rw;
+    ZP:        start =   $10, size =   $F0, type   = rw, define = yes;
+    BSS:       start =  $513, size =  $DF0, type   = rw;
     RAM:       start =  $1000, size = $6000, define = yes;
 }
 

@@ -1,14 +1,19 @@
 ;
 ; kernel.bin
 ; by robert locke
-; version .05
+; version .04
 ; start 11/8/2020
 ; v.04 start 3/20/2022
-; v.05 start 4/9/2022
 ;
 
 
 .include "bios.inc"
+;.include "spi.inc"
+;.include "sdcard.inc"
+.include "fat32.inc"
+.include "regs.inc"
+
+.import fat32_dirent
 
 .segment "BEGIN"
 main
@@ -19,53 +24,70 @@ main
   LDX #<CLEAR_SCREEN_ESC
   LDY #>CLEAR_SCREEN_ESC
   JSR print_string
+
+; Initialize SD Card
+;  jsr sdcard_init
+;  bcc error
+
+  jsr fat32_init
+  bcc error
+
+  lda #'.'
+  jsr print_char
+
+  lda #0
+  jsr fat32_alloc_context
+  sta context
+
+  lda #'.'
+  jsr print_char
+
+  lda #$df
+  sta skip_mask
+
+  lda #<file_name
+  sta fat32_ptr
+  lda #>file_name
+  sta fat32_ptr+1
+  jsr fat32_open
+  bcc error
+
 loop:
+    ; read and print byte
+    jsr fat32_read_byte
+    bcc end
+    jsr print_char
+    jmp loop
 
-  jsr rtc_get_hours
+end:
+    jsr fat32_close
+
+    lda context
+    jmp fat32_free_context
+
+
+  lda #'.'
+  jsr print_char
+
+end_of_program:
+  jmp end_of_program
+
+error:
+  LDX #<KERNEL_ERROR
+  LDY #>KERNEL_ERROR
+  JSR print_string
+
+  lda fat32_errno
   jsr print_hex
-  lda #':'
-  jsr print_char
-  jsr rtc_get_minutes
-  jsr print_hex
-  lda #':'
-  jsr print_char
-  jsr rtc_get_seconds
-  jsr print_hex
+  jmp end_of_program
 
-  lda #' '
-  jsr print_char
-
-  jsr rtc_get_month
-  jsr print_hex
-  lda #'/'
-  jsr print_char
-  jsr rtc_get_date
-  jsr print_hex
-  lda #'/'
-  jsr print_char
-  jsr rtc_get_century
-  jsr print_hex
-  jsr rtc_get_year
-  jsr print_hex
-
-  lda #$1b
-  jsr print_char
-  lda #'['
-  jsr print_char
-
-  lda #'?'
-  jsr print_char
-  lda #'2'
-  jsr print_char
-  lda #'5'
-  jsr print_char
-  lda #'l'
-  jsr print_char
-
-  lda #$0d
-  jsr print_char
-
-  jmp loop
-
-CLEAR_SCREEN_ESC
+file_name:
+  .byte "/84-0.txt",0
+context:
+  .byte 0
+CLEAR_SCREEN_ESC:
   .byte $1B,"c",$00
+KERNEL_MESSAGE:
+  .byte "Kernel",$0A, $0D,$00
+KERNEL_ERROR:
+  .byte "Error: ", $00

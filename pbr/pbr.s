@@ -32,9 +32,11 @@ MAIN
   sta from
   lda #>sector_buffer
   sta from+1
-  stz to
+  lda #$00
+  sta to
   lda #$10
   sta to+1
+
   stz sizel
   lda #$02
   sta sizeh
@@ -66,18 +68,30 @@ BEFORE:
 BEGIN:
   ldy #$00
 @loop:
+  phx
   phy
   jsr sdcard_read_sector
-  ply
+  bcc error
+
+  LDA #<sector_buffer
+  sta from
+  lda #>sector_buffer
+  sta from+1
+
   jsr memory_move_down
+  ply
+  plx
   jsr sd_next_sector
+
+  clc
   lda #$02
   adc to+1
-  iny
-  cpy #$0A
-  bne @loop
-  jmp $1000
 
+  iny
+  cpy #$10
+  bne @loop
+
+  jmp $1000
   brk
 
 
@@ -99,6 +113,12 @@ sd_next_sector:
 @done:
   ply
   rts
+
+error:
+  lda #'x'
+  jsr print_char
+  brk
+
 
 END_COPY:
 

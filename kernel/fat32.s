@@ -11,7 +11,7 @@
 
   .include "lib.inc"
   .include "bios.inc"
-  .include "sdcard.inc"
+;  .include "sdcard.inc"
   .include "fat32.inc"
   .include "regs.inc"
 
@@ -209,7 +209,7 @@ set_errno:
 
 @1:
   pla
-  rts  
+  rts
 
 ;-----------------------------------------------------------------------------
 ; fat32_get_ptable_entry
@@ -229,9 +229,9 @@ fat32_get_ptable_entry:
   asl
   asl
   asl
-  asl 	; Multiple A by 16. Part Table is 16 length 
+  asl 	; Multiple A by 16. Part Table is 16 length
 
-  pha	
+  pha
   jsr load_mbr_sector
   pla
   bcs @1
@@ -456,6 +456,7 @@ set_volume:
         ; Copy current volume back
         lda volume_idx
         bmi @dont_write_back ; < 0 = no current volume
+        lda volume_idx
         asl ; X=A*64
         asl
         asl
@@ -465,7 +466,8 @@ set_volume:
         tax
 
         ldy #0
-@1:     lda cur_volume, y
+@1:
+        lda cur_volume, y
         sta volumes, x
         inx
         iny
@@ -485,7 +487,8 @@ set_volume:
         tax
 
         ldy #0
-@2:     lda volumes, x
+@2:
+        lda volumes, x
         sta cur_volume, y
         inx
         iny
@@ -1883,4 +1886,3 @@ sync_sector_buffer:
 
 @done:  sec
         rts
-
