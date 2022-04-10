@@ -45,6 +45,5 @@ loop:
   jsr rtc_get_year
   jsr print_hex
 
-  jsr print_nlcr
 
   jmp loop
